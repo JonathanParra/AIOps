@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIOps — Operaciones Inteligentes con Google Cloud & Vertex AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #060E1C;
+    --bg2:       #0C1A2E;
+    --bg3:       #0F2040;
+    --cyan:      #00D4FF;
+    --violet:    #7C3AED;
+    --green:     #10F5A0;
+    --text:      #E8F0FF;
+    --muted:     #7A8BA8;
+    --border:    rgba(0, 212, 255, 0.15);
+    --border2:   rgba(124, 58, 237, 0.2);
+    --glow-c:    rgba(0, 212, 255, 0.08);
+    --glow-v:    rgba(124, 58, 237, 0.08);
+    --radius:    12px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 48px;
+    background: rgba(6,14,28,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em;
+    color: var(--cyan);
+  }
+  .nav-logo span { color: var(--text); }
+  nav ul { list-style: none; display: flex; gap: 32px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: .875rem; font-weight: 500; transition: color .2s; }
+  nav a:hover { color: var(--cyan); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 64px;
+    padding: 120px 80px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 70% 50%, var(--glow-c), transparent),
+                radial-gradient(ellipse 40% 60% at 10% 80%, var(--glow-v), transparent);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: .75rem; color: var(--cyan); letter-spacing: .12em;
+    text-transform: uppercase; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .hero-eyebrow::before {
+    content: ''; display: block;
+    width: 24px; height: 1px; background: var(--cyan);
+  }
+
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.4rem, 4.5vw, 4rem);
+    font-weight: 700; line-height: 1.08; letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  h1 em { font-style: normal; color: var(--cyan); }
+  h1 .line2 { color: var(--violet); }
+
+  .hero-desc {
+    font-size: 1.05rem; color: var(--muted); max-width: 480px;
+    margin-bottom: 40px; line-height: 1.7;
+  }
+
+  .hero-ctas { display: flex; gap: 16px; flex-wrap: wrap; }
+
+  .btn-primary {
+    background: var(--cyan); color: var(--bg);
+    padding: 13px 28px; border-radius: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600; font-size: .95rem;
+    text-decoration: none; transition: opacity .2s, transform .15s;
+    display: inline-block;
+  }
+  .btn-primary:hover { opacity: .85; transform: translateY(-1px); }
+
+  .btn-ghost {
+    border: 1px solid var(--border); color: var(--text);
+    padding: 13px 28px; border-radius: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500; font-size: .95rem;
+    text-decoration: none; transition: border-color .2s, color .2s;
+    display: inline-block;
+  }
+  .btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* ── SIGNAL DIAGRAM (hero right) ── */
+  .signal-canvas { width: 100%; max-width: 540px; justify-self: end; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 80px 80px; overflow: hidden;
+  }
+  .stat {
+    background: var(--bg2);
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.2rem; font-weight: 700; color: var(--cyan);
+    line-height: 1; margin-bottom: 6px;
+  }
+  .stat-label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ── SECTIONS ── */
+  section { padding: 96px 80px; }
+  .section-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: .7rem; color: var(--violet); letter-spacing: .14em;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 700; letter-spacing: -0.025em; line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  h2 em { font-style: normal; color: var(--cyan); }
+  .section-lead { color: var(--muted); font-size: 1rem; max-width: 580px; line-height: 1.75; margin-bottom: 56px; }
+
+  /* ── WHAT IS AIOPS ── */
+  .what-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 48px; align-items: start;
+  }
+  .what-body p { color: var(--muted); line-height: 1.8; margin-bottom: 16px; font-size: .975rem; }
+  .what-body p strong { color: var(--text); }
+
+  .pillar-list { display: flex; flex-direction: column; gap: 16px; }
+  .pillar {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 20px 22px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color .2s;
+  }
+  .pillar:hover { border-color: var(--cyan); }
+  .pillar-icon {
+    width: 40px; height: 40px; flex-shrink: 0;
+    background: var(--glow-c); border: 1px solid var(--border);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .pillar h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: .9rem; font-weight: 600; margin-bottom: 4px;
+  }
+  .pillar p { color: var(--muted); font-size: .82rem; line-height: 1.55; }
+
+  /* ── BENEFITS ── */
+  .benefits-section { background: var(--bg2); }
+  .benefits-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .benefit-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 26px;
+    position: relative; overflow: hidden;
+    transition: transform .2s, border-color .25s;
+  }
+  .benefit-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    opacity: 0; transition: opacity .25s;
+  }
+  .benefit-card:hover { transform: translateY(-3px); border-color: rgba(0,212,255,.35); }
+  .benefit-card:hover::before { opacity: 1; }
+  .benefit-icon { font-size: 1.8rem; margin-bottom: 14px; }
+  .benefit-card h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem; font-weight: 600; margin-bottom: 8px;
+  }
+  .benefit-card p { color: var(--muted); font-size: .85rem; line-height: 1.65; }
+  .benefit-tag {
+    display: inline-block; margin-top: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: .7rem; color: var(--green);
+    background: rgba(16,245,160,.08);
+    border: 1px solid rgba(16,245,160,.2);
+    padding: 3px 10px; border-radius: 4px;
+  }
+
+  /* ── STACK / TOOLS ── */
+  .tools-section { position: relative; }
+  .tools-section::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse 50% 40% at 80% 50%, var(--glow-v), transparent);
+    pointer-events: none;
+  }
+
+  .stack-container { display: grid; grid-template-columns: 280px 1fr; gap: 48px; align-items: start; }
+
+  .stack-nav { display: flex; flex-direction: column; gap: 4px; }
+  .stack-tab {
+    padding: 12px 16px; border-radius: 8px;
+    cursor: pointer; transition: background .2s, color .2s;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: .9rem; font-weight: 500; color: var(--muted);
+    border: 1px solid transparent;
+  }
+  .stack-tab:hover { background: var(--bg2); color: var(--text); }
+  .stack-tab.active {
+    background: var(--bg2); color: var(--cyan);
+    border-color: var(--border);
+  }
+
+  .stack-panel { display: none; }
+  .stack-panel.active { display: block; }
+
+  .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tool-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    transition: border-color .2s;
+  }
+  .tool-card:hover { border-color: rgba(124,58,237,.5); }
+  .tool-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .tool-logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--violet), var(--cyan));
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 1rem; flex-shrink: 0;
+    font-weight: 700; font-family: 'Space Grotesk', sans-serif;
+    color: white; font-size: .75rem; letter-spacing: .04em;
+  }
+  .tool-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: .9rem; font-weight: 600;
+  }
+  .tool-type {
+    font-family: 'Space Mono', monospace;
+    font-size: .65rem; color: var(--muted);
+  }
+  .tool-card p { color: var(--muted); font-size: .82rem; line-height: 1.6; }
+
+  /* ── VERTEX SPOTLIGHT ── */
+  .vertex-section { background: var(--bg2); }
+  .vertex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+  .vertex-feature-list { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
+  .vf {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 16px 18px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+  }
+  .vf-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--violet); flex-shrink: 0; margin-top: 6px;
+  }
+  .vf-text h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: .88rem; font-weight: 600; margin-bottom: 3px;
+  }
+  .vf-text p { color: var(--muted); font-size: .8rem; line-height: 1.55; }
+
+  .vertex-visual {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 16px; padding: 32px;
+    position: relative; overflow: hidden;
+  }
+  .vertex-visual::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(124,58,237,.25), transparent 70%);
+  }
+  .vv-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .65rem; color: var(--violet); letter-spacing: .1em;
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+  .vv-flow { display: flex; flex-direction: column; gap: 8px; }
+  .vv-step {
+    display: flex; gap: 14px; align-items: center;
+    padding: 12px 16px; border-radius: 8px;
+    background: var(--bg2); border: 1px solid var(--border);
+    font-size: .82rem;
+  }
+  .vv-step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: .7rem; color: var(--cyan); flex-shrink: 0; width: 20px;
+  }
+  .vv-step-name { font-weight: 500; flex: 1; }
+  .vv-step-tag {
+    font-size: .68rem;
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(0,212,255,.08);
+    color: var(--cyan);
+    font-family: 'Space Mono', monospace;
+  }
+  .vv-arrow {
+    text-align: center; color: var(--muted); font-size: .75rem;
+    padding: 2px 0;
+  }
+
+  /* ── PRICING ── */
+  .pricing-section { }
+  .pricing-intro { max-width: 620px; margin-bottom: 56px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 40px; }
+  .price-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    transition: border-color .2s;
+  }
+  .price-card.highlight {
+    background: linear-gradient(135deg, rgba(0,212,255,.06), rgba(124,58,237,.06));
+    border-color: var(--cyan);
+  }
+  .price-tier {
+    font-family: 'Space Mono', monospace;
+    font-size: .7rem; color: var(--muted); letter-spacing: .1em;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  .price-tier.gold { color: var(--cyan); }
+  .price-amount {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem; font-weight: 700; margin-bottom: 4px;
+    line-height: 1;
+  }
+  .price-period { font-size: .8rem; color: var(--muted); margin-bottom: 20px; }
+  .price-divider { height: 1px; background: var(--border); margin: 20px 0; }
+  .price-items { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .price-items li {
+    font-size: .84rem; color: var(--muted);
+    display: flex; align-items: flex-start; gap: 8px; line-height: 1.5;
+  }
+  .price-items li::before {
+    content: '↳'; color: var(--cyan); flex-shrink: 0;
+    font-family: 'Space Mono', monospace; font-size: .75rem;
+  }
+
+  .pricing-note {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--violet);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    font-size: .87rem; color: var(--muted); line-height: 1.7;
+  }
+  .pricing-note strong { color: var(--text); }
+
+  /* ── ROADMAP ── */
+  .roadmap-section { background: var(--bg2); }
+  .roadmap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+  .roadmap::before {
+    content: '';
+    position: absolute; top: 28px; left: 5%; right: 5%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+  }
+  .rm-phase { padding: 0 16px; text-align: center; }
+  .rm-dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--cyan);
+    margin: 20px auto 24px; position: relative; z-index: 1;
+  }
+  .rm-phase:nth-child(2) .rm-dot { border-color: #55C8E8; background: rgba(0,212,255,.2); }
+  .rm-phase:nth-child(3) .rm-dot { border-color: var(--violet); }
+  .rm-phase:nth-child(4) .rm-dot { border-color: var(--green); }
+  .rm-label {
+    font-family: 'Space Mono', monospace;
+    font-size: .65rem; color: var(--muted); letter-spacing: .1em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .rm-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: .92rem; font-weight: 600; margin-bottom: 10px;
+  }
+  .rm-items { font-size: .8rem; color: var(--muted); line-height: 1.65; }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 48px 80px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--muted); font-size: .82rem;
+  }
+  .footer-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; color: var(--cyan); font-size: 1rem;
+  }
+
+  /* ── UTILITIES ── */
+  .divider { height: 1px; background: var(--border); margin: 0 80px; }
+
+  @media (max-width: 900px) {
+    nav { padding: 14px 24px; }
+    nav ul { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 100px 24px 48px; }
+    .signal-canvas { max-width: 100%; }
+    .stats-bar { grid-template-columns: 1fr 1fr; margin: 0 24px 48px; }
+    section { padding: 64px 24px; }
+    .what-grid, .vertex-grid, .stack-container { grid-template-columns: 1fr; }
+    .benefits-grid, .pricing-grid { grid-template-columns: 1fr; }
+    .tool-grid { grid-template-columns: 1fr; }
+    .roadmap { grid-template-columns: 1fr 1fr; }
+    .roadmap::before { display: none; }
+    footer { padding: 32px 24px; flex-direction: column; gap: 12px; text-align: center; }
+  }
+
+  /* Animations */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  @keyframes flowIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:none} }
+  .anim-in { animation: flowIn .5s ease forwards; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">AI<span>Ops</span></div>
+  <ul>
+    <li><a href="#que-es">¿Qué es?</a></li>
+    <li><a href="#beneficios">Beneficios</a></li>
+    <li><a href="#stack">Herramientas</a></li>
+    <li><a href="#vertex">Vertex AI</a></li>
+    <li><a href="#costos">Costos</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-eyebrow">Modernización de Operaciones</div>
+    <h1>
+      Operaciones que<br>
+      <em>aprenden solas.</em><br>
+      <span class="line2">Infraestructura que<br>se anticipa.</span>
+    </h1>
+    <p class="hero-desc">
+      AIOps integra inteligencia artificial en el núcleo de las operaciones IT —
+      correlacionando señales, detectando anomalías y actuando antes de que el incidente impacte al negocio.
+    </p>
+    <div class="hero-ctas">
+      <a href="#que-es" class="btn-primary">Explorar AIOps →</a>
+      <a href="#costos" class="btn-ghost">Ver costos</a>
+    </div>
+  </div>
+
+  <!-- Signal Diagram SVG -->
+  <div class="signal-canvas">
+    <svg viewBox="0 0 500 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+      <defs>
+        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#00D4FF;stop-opacity:0"/>
+          <stop offset="50%" style="stop-color:#00D4FF;stop-opacity:1"/>
+          <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:.6"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <linearGradient id="gradFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00D4FF" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#00D4FF" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Background grid -->
+      <g opacity="0.06" stroke="#00D4FF" stroke-width="0.5">
+        <line x1="0" y1="60" x2="500" y2="60"/>
+        <line x1="0" y1="120" x2="500" y2="120"/>
+        <line x1="0" y1="180" x2="500" y2="180"/>
+        <line x1="0" y1="240" x2="500" y2="240"/>
+        <line x1="0" y1="300" x2="500" y2="300"/>
+        <line x1="0" y1="360" x2="500" y2="360"/>
+        <line x1="60" y1="0" x2="60" y2="420"/>
+        <line x1="120" y1="0" x2="120" y2="420"/>
+        <line x1="180" y1="0" x2="180" y2="420"/>
+        <line x1="240" y1="0" x2="240" y2="420"/>
+        <line x1="300" y1="0" x2="300" y2="420"/>
+        <line x1="360" y1="0" x2="360" y2="420"/>
+        <line x1="420" y1="0" x2="420" y2="420"/>
+      </g>
+
+      <!-- Signal line (normal) -->
+      <polyline points="0,210 40,210 60,195 80,210 100,210 120,210 140,200 160,210 180,210 200,210"
+        fill="none" stroke="url(#g1)" stroke-width="2" opacity="0.5"/>
+
+      <!-- Signal area fill -->
+      <polygon points="200,210 220,160 240,80 260,40 280,80 300,150 320,190 340,200 360,195 380,200 400,205 420,210 500,210 500,420 0,420"
+        fill="url(#gradFill)" opacity="0.6"/>
+
+      <!-- Main signal anomaly spike -->
+      <polyline points="200,210 220,160 240,80 260,40 280,80 300,150 320,190 340,200 360,195 380,200 400,205 420,210 500,210"
+        fill="none" stroke="url(#g1)" stroke-width="2.5" filter="url(#glow)"/>
+
+      <!-- Anomaly marker -->
+      <circle cx="260" cy="40" r="6" fill="#00D4FF" filter="url(#glow)" opacity="0.9">
+        <animate attributeName="r" values="6;9;6" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.9;0.5;0.9" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <line x1="260" y1="40" x2="260" y2="420" stroke="#00D4FF" stroke-width="1" stroke-dasharray="4,4" opacity="0.2"/>
+
+      <!-- Anomaly label -->
+      <rect x="270" y="20" width="110" height="28" rx="4" fill="#0F2040" stroke="#00D4FF" stroke-width="1" opacity="0.9"/>
+      <text x="325" y="39" font-family="Space Mono, monospace" font-size="9" fill="#00D4FF" text-anchor="middle">ANOMALÍA DETECTADA</text>
+
+      <!-- AI Response indicator -->
+      <rect x="270" y="58" width="90" height="22" rx="4" fill="rgba(124,58,237,0.2)" stroke="#7C3AED" stroke-width="1"/>
+      <text x="315" y="73" font-family="Space Mono, monospace" font-size="8" fill="#7C3AED" text-anchor="middle">→ AI RESPONDIENDO</text>
+
+      <!-- Node boxes -->
+      <!-- Observe -->
+      <rect x="10" y="340" width="90" height="56" rx="8" fill="#0C1A2E" stroke="rgba(0,212,255,0.3)" stroke-width="1"/>
+      <text x="55" y="362" font-family="Space Grotesk, sans-serif" font-size="9" fill="#00D4FF" text-anchor="middle" font-weight="600">OBSERVAR</text>
+      <text x="55" y="376" font-family="Inter, sans-serif" font-size="8" fill="#7A8BA8" text-anchor="middle">Métricas &amp; Logs</text>
+      <text x="55" y="388" font-family="Inter, sans-serif" font-size="8" fill="#7A8BA8" text-anchor="middle">Cloud Monitoring</text>
+
+      <!-- Detect -->
+      <rect x="130" y="340" width="90" height="56" rx="8" fill="#0C1A2E" stroke="rgba(0,212,255,0.3)" stroke-width="1"/>
+      <text x="175" y="362" font-family="Space Grotesk, sans-serif" font-size="9" fill="#00D4FF" text-anchor="middle" font-weight="600">DETECTAR</text>
+      <text x="175" y="376" font-family="Inter, sans-serif" font-size="8" fill="#7A8BA8" text-anchor="middle">Anomalías ML</text>
+      <text x="175" y="388" font-family="Inter, sans-serif" font-size="8" fill="#7A8BA8" text-anchor="middle">Vertex AI</text>
+
+      <!-- Analyze -->
+      <rect x="250" y="340" width="90" height="56" rx="8" fill="#0C1A2E" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+      <text x="295" y="362" font-family="Space Grotesk, sans-serif" font-size="9" fill="#7C3AED" text-anchor="middle" font-weight="600">ANALIZAR</text>
+      <text x="295" y="376" font-family="Inter, sans-serif" font-size="8" fill="#7A8BA8" text-anchor="middle">Root Cause AI</text>
+      <text x="295" y="388" font-family="Inter, sans-serif" font-size="8" fill="#7A8BA8" text-anchor="middle">Gemini + RAG</text>
+
+      <!-- Act -->
+      <rect x="370" y="340" width="90" height="56" rx="8" fill="#0C1A2E" stroke="rgba(16,245,160,0.3)" stroke-width="1"/>
+      <text x="415" y="362" font-family="Space Grotesk, sans-serif" font-size="9" fill="#10F5A0" text-anchor="middle" font-weight="600">ACTUAR</text>
+      <text x="415" y="376" font-family="Inter, sans-serif" font-size="8" fill="#7A8BA8" text-anchor="middle">Auto-remediación</text>
+      <text x="415" y="388" font-family="Inter, sans-serif" font-size="8" fill="#7A8BA8" text-anchor="middle">Cloud Run / GKE</text>
+
+      <!-- Arrows between boxes -->
+      <line x1="100" y1="368" x2="128" y2="368" stroke="rgba(0,212,255,0.4)" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="220" y1="368" x2="248" y2="368" stroke="rgba(0,212,255,0.4)" stroke-width="1.5"/>
+      <line x1="340" y1="368" x2="368" y2="368" stroke="rgba(0,212,255,0.4)" stroke-width="1.5"/>
+      <polygon points="128,364 136,368 128,372" fill="rgba(0,212,255,0.6)"/>
+      <polygon points="248,364 256,368 248,372" fill="rgba(0,212,255,0.6)"/>
+      <polygon points="368,364 376,368 368,372" fill="rgba(0,212,255,0.6)"/>
+
+      <!-- Vertical connectors from signal to boxes -->
+      <line x1="55" y1="210" x2="55" y2="338" stroke="rgba(0,212,255,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="175" y1="210" x2="175" y2="338" stroke="rgba(0,212,255,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="295" y1="210" x2="295" y2="338" stroke="rgba(124,58,237,0.2)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="415" y1="210" x2="415" y2="338" stroke="rgba(16,245,160,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+    </svg>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">70%</div><div class="stat-label">Reducción MTTR</div></div>
+  <div class="stat"><div class="stat-num">60%</div><div class="stat-label">Menos falsos positivos</div></div>
+  <div class="stat"><div class="stat-num">3×</div><div class="stat-label">Mayor velocidad detección</div></div>
+  <div class="stat"><div class="stat-num">40%</div><div class="stat-label">Reducción costo operativo</div></div>
+</div>
+
+<!-- QUÉ ES AIOPS -->
+<section id="que-es">
+  <div class="section-eyebrow">// definición</div>
+  <h2>¿Qué es <em>AIOps</em>?</h2>
+
+  <div class="what-grid">
+    <div class="what-body">
+      <p>
+        <strong>AIOps (Artificial Intelligence for IT Operations)</strong> es la aplicación de machine learning,
+        big data y automatización inteligente para mejorar y parcialmente reemplazar los procesos de gestión
+        de operaciones IT.
+      </p>
+      <p>
+        En lugar de operar con umbrales estáticos y alertas reactivas, AIOps aprende los patrones normales
+        de tu infraestructura y detecta desviaciones en tiempo real — correlacionando señales de múltiples
+        fuentes para identificar causas raíz, no síntomas.
+      </p>
+      <p>
+        El resultado es un <strong>ciclo continuo de observabilidad, análisis y acción automatizada</strong>
+        que libera a los equipos de tareas repetitivas y reduce el tiempo desde alerta hasta resolución.
+      </p>
+      <p>
+        Gartner define AIOps como "plataformas que combinan big data y ML para automatizar procesos de
+        operaciones IT, incluyendo event correlation, anomaly detection y causality determination."
+      </p>
+    </div>
+
+    <div class="pillar-list">
+      <div class="pillar">
+        <div class="pillar-icon">📡</div>
+        <div>
+          <h4>Observabilidad Unificada</h4>
+          <p>Ingesta de métricas, logs, trazas y eventos desde múltiples fuentes en un pipeline centralizado.</p>
+        </div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">🧠</div>
+        <div>
+          <h4>Detección Inteligente</h4>
+          <p>Modelos ML identifican anomalías y correlacionan eventos que los humanos tardarían horas en conectar.</p>
+        </div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">⚡</div>
+        <div>
+          <h4>Automatización de Respuesta</h4>
+          <p>Runbooks ejecutables automáticamente cuando se detecta un patrón conocido, sin intervención humana.</p>
+        </div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">🔄</div>
+        <div>
+          <h4>Aprendizaje Continuo</h4>
+          <p>Los modelos mejoran con cada incidente, reduciendo falsos positivos y ajustando baselines dinámicamente.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BENEFICIOS -->
+<section class="benefits-section" id="beneficios">
+  <div class="section-eyebrow">// valor de negocio</div>
+  <h2>Por qué las organizaciones adoptan <em>AIOps</em></h2>
+  <p class="section-lead">
+    El volumen de datos y la complejidad de los entornos modernos superan la capacidad humana de análisis.
+    AIOps no es una mejora incremental — es un cambio de paradigma en cómo operamos infraestructura crítica.
+  </p>
+
+  <div class="benefits-grid">
+    <div class="benefit-card">
+      <div class="benefit-icon">⏱️</div>
+      <h3>Reducción de MTTR</h3>
+      <p>Correlación automática de eventos reduce el tiempo de identificación de causa raíz de horas a minutos. Los equipos llegan al incidente ya con contexto, no con datos crudos.</p>
+      <span class="benefit-tag">↓ 60–70% MTTR</span>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">🔕</div>
+      <h3>Reducción de Noise</h3>
+      <p>Los sistemas modernos generan miles de alertas por hora. AIOps agrupa eventos relacionados en un único incidente accionable, eliminando la fatiga de alertas del equipo.</p>
+      <span class="benefit-tag">↓ 85% alert volume</span>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">🔮</div>
+      <h3>Detección Predictiva</h3>
+      <p>ML identifica patrones precursores de fallas antes de que impacten al usuario final. Más tiempo para mitigar, menos interrupciones de servicio.</p>
+      <span class="benefit-tag">Proactive SLA</span>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">🤖</div>
+      <h3>Auto-Remediación</h3>
+      <p>Para incidentes conocidos y catalogados, el sistema puede ejecutar la respuesta sin intervención humana — reinicios, escalado, redirección de tráfico, rollbacks.</p>
+      <span class="benefit-tag">24/7 sin oncall</span>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">📊</div>
+      <h3>Disponibilidad Medible</h3>
+      <p>Baseline de comportamiento normal permite calcular disponibilidad real, validar SLAs y construir dashboards de salud que hablen al lenguaje del negocio.</p>
+      <span class="benefit-tag">SLO-driven ops</span>
+    </div>
+    <div class="benefit-card">
+      <div class="benefit-icon">💰</div>
+      <h3>Eficiencia Operativa</h3>
+      <p>Menos tiempo en tareas reactivas y más en mejoras proactivas. El equipo se libera de ser bomberos para convertirse en arquitectos de resiliencia.</p>
+      <span class="benefit-tag">↓ 40% OpEx</span>
+    </div>
+  </div>
+</section>
+
+<!-- HERRAMIENTAS / STACK -->
+<section class="tools-section" id="stack">
+  <div class="section-eyebrow">// stack tecnológico</div>
+  <h2>Herramientas para <em>implementar AIOps</em></h2>
+  <p class="section-lead">
+    Un stack AIOps bien construido cubre cuatro capas: recolección de datos, observabilidad, capa de IA y automatización de respuesta.
+    Google Cloud ofrece una suite integrada para cada capa.
+  </p>
+
+  <div class="stack-container">
+    <div class="stack-nav">
+      <div class="stack-tab active" onclick="showTab('observability')">📡 Observabilidad</div>
+      <div class="stack-tab" onclick="showTab('ai')">🧠 Capa de IA</div>
+      <div class="stack-tab" onclick="showTab('automation')">⚡ Automatización</div>
+      <div class="stack-tab" onclick="showTab('integration')">🔗 Integración</div>
+    </div>
+
+    <div>
+      <div id="tab-observability" class="stack-panel active">
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo">CM</div>
+              <div><div class="tool-name">Cloud Monitoring</div><div class="tool-type">Métricas &amp; Alertas</div></div>
+            </div>
+            <p>Recolección de métricas de infraestructura, aplicaciones y servicios gestionados. Integrado nativamente con GCE, GKE, Cloud SQL y más de 100 integraciones externas.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo">CL</div>
+              <div><div class="tool-name">Cloud Logging</div><div class="tool-type">Logs Centralizados</div></div>
+            </div>
+            <p>Pipeline de logs unificado con retención configurable, búsqueda en tiempo real y exportación a BigQuery para análisis histórico. Base del observability stack.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo">CT</div>
+              <div><div class="tool-name">Cloud Trace</div><div class="tool-type">Distributed Tracing</div></div>
+            </div>
+            <p>Trazabilidad distribuida para microservicios. Identifica cuellos de botella y latencias en cadenas de llamadas complejas.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo">CP</div>
+              <div><div class="tool-name">Cloud Profiler</div><div class="tool-type">Performance</div></div>
+            </div>
+            <p>Profiling continuo de CPU y memoria en producción con overhead mínimo. Complementa el stack de observabilidad con datos de rendimiento de aplicación.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-ai" class="stack-panel">
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#7C3AED,#A855F7)">VAI</div>
+              <div><div class="tool-name">Vertex AI</div><div class="tool-type">Plataforma ML Central</div></div>
+            </div>
+            <p>Entrena y despliega modelos de detección de anomalías, clasificación de incidentes y predicción de fallas. Incluye AutoML para equipos sin ML expertise profundo.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#4F46E5,#7C3AED)">GEM</div>
+              <div><div class="tool-name">Gemini (via Vertex)</div><div class="tool-type">LLM para Análisis</div></div>
+            </div>
+            <p>Análisis de logs en lenguaje natural, generación de postmortems automáticos, clasificación de incidentes y asistente conversacional para operaciones.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#0891B2,#00D4FF)">BQ</div>
+              <div><div class="tool-name">BigQuery ML</div><div class="tool-type">Modelos sobre Datos</div></div>
+            </div>
+            <p>Crea modelos ML directamente sobre los datos de logs y métricas en BigQuery usando SQL. Ideal para análisis de tendencias y predicción de capacidad.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#059669,#10F5A0)">AI-M</div>
+              <div><div class="tool-name">Vertex AI Monitoring</div><div class="tool-type">Model Ops</div></div>
+            </div>
+            <p>Monitorea la calidad y drift de los modelos ML en producción. Detecta cuando los modelos AIOps necesitan reentrenamiento por cambios en el entorno.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-automation" class="stack-panel">
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#EA580C,#F97316)">WF</div>
+              <div><div class="tool-name">Cloud Workflows</div><div class="tool-type">Orquestación de Runbooks</div></div>
+            </div>
+            <p>Automatiza flujos de remediación complejos con lógica condicional, reintentos y paralelismo. El motor de ejecución de runbooks en Google Cloud.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#DC2626,#EF4444)">CF</div>
+              <div><div class="tool-name">Cloud Functions</div><div class="tool-type">Respuesta Event-Driven</div></div>
+            </div>
+            <p>Ejecuta acciones de remediación en respuesta a alertas sin necesidad de infraestructura dedicada. Ideal para acciones simples y de alta frecuencia.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#0369A1,#0EA5E9)">GKE</div>
+              <div><div class="tool-name">GKE Autopilot</div><div class="tool-type">Self-Healing Infra</div></div>
+            </div>
+            <p>Kubernetes gestionado con capacidad de auto-escalado y auto-reparación de pods. La plataforma de despliegue para agentes AIOps y workloads de ML.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#7E22CE,#9333EA)">PS</div>
+              <div><div class="tool-name">Pub/Sub</div><div class="tool-type">Event Streaming</div></div>
+            </div>
+            <p>Bus de eventos para conectar fuentes de alertas con consumidores de remediación. Garantiza entrega y permite desacoplar el pipeline de detección del de acción.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-integration" class="stack-panel">
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#B45309,#D97706)">INT</div>
+              <div><div class="tool-name">Integrations (iPaaS)</div><div class="tool-type">Conectores</div></div>
+            </div>
+            <p>Conecta alertas de Google Cloud con ServiceNow, PagerDuty, Jira Service Management o sistemas ITSM existentes sin código personalizado.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#166534,#16A34A)">OPS</div>
+              <div><div class="tool-name">Google Cloud Ops (Suite)</div><div class="tool-type">Observabilidad end-to-end</div></div>
+            </div>
+            <p>Suite unificada que combina Monitoring, Logging, Trace y Error Reporting bajo un mismo panel. Dashboard único para la cadena completa de señales.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#0F766E,#0D9488)">GRA</div>
+              <div><div class="tool-name">Grafana / Looker</div><div class="tool-type">Dashboards</div></div>
+            </div>
+            <p>Visualización de métricas AIOps para stakeholders técnicos (Grafana) y ejecutivos (Looker). Ambas herramientas se integran nativamente con Google Cloud.</p>
+          </div>
+          <div class="tool-card">
+            <div class="tool-header">
+              <div class="tool-logo" style="background:linear-gradient(135deg,#7C3AED,#00D4FF)">TF</div>
+              <div><div class="tool-name">Terraform / Config Sync</div><div class="tool-type">IaC + GitOps</div></div>
+            </div>
+            <p>Gestión de infraestructura como código con drift detection automatizada. Config Sync en GKE garantiza que el estado real coincide con el deseado continuamente.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VERTEX AI SPOTLIGHT -->
+<section class="vertex-section" id="vertex">
+  <div class="section-eyebrow">// motor de inteligencia</div>
+  <h2><em>Vertex AI</em> como núcleo de AIOps</h2>
+
+  <div class="vertex-grid">
+    <div>
+      <p style="color:var(--muted);line-height:1.8;margin-bottom:8px;">
+        Vertex AI es la plataforma unificada de Google Cloud para construir, entrenar, desplegar y monitorear
+        modelos de ML en producción. En el contexto AIOps, actúa como el cerebro central que procesa
+        señales operacionales y genera inteligencia accionable.
+      </p>
+      <div class="vertex-feature-list">
+        <div class="vf">
+          <div class="vf-dot"></div>
+          <div class="vf-text">
+            <h4>AutoML para Anomaly Detection</h4>
+            <p>Entrena modelos de detección de anomalías sobre tus propios datos de métricas sin necesidad de data scientists dedicados. Google gestiona la arquitectura del modelo.</p>
+          </div>
+        </div>
+        <div class="vf">
+          <div class="vf-dot"></div>
+          <div class="vf-text">
+            <h4>Gemini Flash / Pro vía API</h4>
+            <p>Análisis de logs en lenguaje natural, clasificación de incidentes y generación de hipótesis de causa raíz usando los modelos Gemini desde Vertex AI Studio.</p>
+          </div>
+        </div>
+        <div class="vf">
+          <div class="vf-dot"></div>
+          <div class="vf-text">
+            <h4>Feature Store &amp; Pipelines</h4>
+            <p>Reutiliza features computadas (tasas de error, percentiles de latencia) entre modelos. Vertex Pipelines orquesta el reentrenamiento automático cuando la calidad decae.</p>
+          </div>
+        </div>
+        <div class="vf">
+          <div class="vf-dot"></div>
+          <div class="vf-text">
+            <h4>Model Registry + Monitoring</h4>
+            <p>Versiona los modelos de detección y monitorea su rendimiento en producción. Detecta data drift cuando el comportamiento de la infraestructura cambia estructuralmente.</p>
+          </div>
+        </div>
+        <div class="vf">
+          <div class="vf-dot"></div>
+          <div class="vf-text">
+            <h4>Agentes IA (Agent Builder)</h4>
+            <p>Construye agentes conversacionales que consultan el estado de la infraestructura y ejecutan acciones de remediación en lenguaje natural, integrados con Confluence/ITSM.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="vertex-visual">
+      <div class="vv-label">Flujo Vertex AI en AIOps</div>
+      <div class="vv-flow">
+        <div class="vv-step">
+          <span class="vv-step-num">01</span>
+          <span class="vv-step-name">Ingestión de señales operacionales</span>
+          <span class="vv-step-tag">BigQuery</span>
+        </div>
+        <div class="vv-arrow">↓</div>
+        <div class="vv-step">
+          <span class="vv-step-num">02</span>
+          <span class="vv-step-name">Feature engineering (métricas derivadas)</span>
+          <span class="vv-step-tag">Feature Store</span>
+        </div>
+        <div class="vv-arrow">↓</div>
+        <div class="vv-step">
+          <span class="vv-step-num">03</span>
+          <span class="vv-step-name">Detección de anomalías (modelo ML)</span>
+          <span class="vv-step-tag">AutoML / Custom</span>
+        </div>
+        <div class="vv-arrow">↓</div>
+        <div class="vv-step">
+          <span class="vv-step-num">04</span>
+          <span class="vv-step-name">Análisis de causa raíz con Gemini</span>
+          <span class="vv-step-tag">Gemini Pro</span>
+        </div>
+        <div class="vv-arrow">↓</div>
+        <div class="vv-step">
+          <span class="vv-step-num">05</span>
+          <span class="vv-step-name">Generación de recomendación / runbook</span>
+          <span class="vv-step-tag">Agent Builder</span>
+        </div>
+        <div class="vv-arrow">↓</div>
+        <div class="vv-step">
+          <span class="vv-step-num">06</span>
+          <span class="vv-step-name">Ejecución automatizada o asistida</span>
+          <span class="vv-step-tag">Cloud Workflows</span>
+        </div>
+        <div class="vv-arrow">↓</div>
+        <div class="vv-step" style="border-color:rgba(16,245,160,0.3)">
+          <span class="vv-step-num" style="color:var(--green)">07</span>
+          <span class="vv-step-name">Feedback al modelo para mejora continua</span>
+          <span class="vv-step-tag" style="color:var(--green);background:rgba(16,245,160,.08)">ML Ops</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COSTOS -->
+<section id="costos">
+  <div class="section-eyebrow">// inversión estimada</div>
+  <h2>Costo aproximado de <em>implementación</em></h2>
+  <div class="pricing-intro">
+    <p style="color:var(--muted);line-height:1.8;">
+      Los costos AIOps en Google Cloud son una combinación de servicios de plataforma (Vertex AI, Cloud Monitoring, BigQuery)
+      más el esfuerzo de implementación. Los rangos a continuación son referenciales para organizaciones medianas
+      en América Latina, con facturación mensual en USD.
+    </p>
+  </div>
+
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="price-tier">Nivel 1 — Fundación</div>
+      <div class="price-amount">$1.500–4.000</div>
+      <div class="price-period">USD / mes (infraestructura GCP)</div>
+      <div class="price-divider"></div>
+      <ul class="price-items">
+        <li>Cloud Monitoring + Logging (hasta 50GB logs/mes)</li>
+        <li>BigQuery para análisis histórico de métricas</li>
+        <li>Vertex AI AutoML: 2–3 modelos de anomaly detection</li>
+        <li>Cloud Functions para respuestas simples</li>
+        <li>Dashboards en Grafana / Looker Studio</li>
+        <li>Sin capa de agentes IA (Gemini limitado)</li>
+      </ul>
+    </div>
+
+    <div class="price-card highlight">
+      <div class="price-tier gold">Nivel 2 — AIOps Completo ✦</div>
+      <div class="price-amount">$5.000–12.000</div>
+      <div class="price-period">USD / mes (infraestructura GCP)</div>
+      <div class="price-divider"></div>
+      <ul class="price-items">
+        <li>Todo el Nivel 1</li>
+        <li>Gemini Pro vía Vertex para análisis de logs e incidentes</li>
+        <li>Vertex AI Pipelines para reentrenamiento automático</li>
+        <li>Cloud Workflows para runbooks complejos</li>
+        <li>Agent Builder para asistente operacional conversacional</li>
+        <li>Vertex AI Model Monitoring para drift detection</li>
+        <li>Integración con ITSM (ServiceNow / Jira)</li>
+      </ul>
+    </div>
+
+    <div class="price-card">
+      <div class="price-tier">Nivel 3 — Enterprise</div>
+      <div class="price-amount">$15.000–40.000</div>
+      <div class="price-period">USD / mes + licencias ITSM</div>
+      <div class="price-divider"></div>
+      <ul class="price-items">
+        <li>Todo el Nivel 2</li>
+        <li>Modelos custom entrenados sobre datos propios</li>
+        <li>GKE Autopilot para agentes distribuidos</li>
+        <li>Multi-región con correlación cross-datacenter</li>
+        <li>Gemini Enterprise con contextos extensos</li>
+        <li>Dedicated support Google + SLA mejorado</li>
+        <li>Licencias ServiceNow / Dynatrace / Datadog integradas</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="pricing-note">
+    <strong>Nota sobre el costo total (TCO):</strong> Los costos de infraestructura GCP son solo una parte.
+    Un proyecto AIOps completo incluye también: <strong>implementación inicial</strong> (3–6 meses, equipo interno o partner, $50k–200k USD dependiendo del alcance),
+    <strong>entrenamiento del equipo</strong> (~$5k–15k), y costos recurrentes de
+    <strong>mantenimiento de modelos y pipelines</strong> (1–2 FTEs o servicio gestionado).
+    El ROI típico se alcanza en 12–18 meses considerando reducción de horas perdidas por incidentes y optimización de capacidad.
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ROADMAP -->
+<section class="roadmap-section">
+  <div style="padding:0;max-width:900px">
+    <div class="section-eyebrow" style="margin-bottom:14px">// implementación</div>
+    <h2 style="margin-bottom:8px">Roadmap de adopción</h2>
+    <p class="section-lead">Un camino realista para organizaciones que parten desde un stack de monitoreo tradicional.</p>
+  </div>
+
+  <div class="roadmap">
+    <div class="rm-phase">
+      <div class="rm-dot"></div>
+      <div class="rm-label">Mes 1–2</div>
+      <div class="rm-title">Observabilidad Base</div>
+      <div class="rm-items">Centralizar logs y métricas en Cloud Monitoring. Definir golden signals. Eliminar alertas redundantes. Conectar BigQuery.</div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-dot"></div>
+      <div class="rm-label">Mes 3–4</div>
+      <div class="rm-title">Primeros Modelos ML</div>
+      <div class="rm-items">Entrenar modelo de anomaly detection con AutoML. Definir pipeline de datos. Medir reducción de falsos positivos vs umbrales estáticos.</div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-dot"></div>
+      <div class="rm-label">Mes 5–7</div>
+      <div class="rm-title">IA Conversacional</div>
+      <div class="rm-items">Integrar Gemini vía Vertex para análisis de incidentes. Construir agente con Confluence/ITSM. Automatizar postmortems iniciales.</div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-dot"></div>
+      <div class="rm-label">Mes 8–12</div>
+      <div class="rm-title">Auto-Remediación</div>
+      <div class="rm-items">Runbooks automatizados para incidentes conocidos. Cierre del ciclo: feedback al modelo desde resoluciones. Métricas de ROI operacional.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">AIOps</div>
+  <div>Google Cloud · Vertex AI · Gemini · Cloud Monitoring · BigQuery</div>
+  <div>Infraestructura que se anticipa.</div>
+</footer>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.stack-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.stack-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.benefit-card, .pillar, .tool-card, .price-card, .vf').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
